@@ -24,4 +24,5 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Run the Dash app via Gunicorn
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "fraud_dashboard:app.server"]
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "fraud_dashboard:server"]
+

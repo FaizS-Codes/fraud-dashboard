@@ -6,13 +6,13 @@
 #        actionable, minimal recommendations with jump-to-chart links.
 # =====================================================
 
-
 import os, base64, json
 import pandas as pd
 import numpy as np
 import dash
 from dash import dcc, html, dash_table, Input, Output, State, ALL
 import plotly.express as px
+from flask import Response  # for /healthz
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -571,6 +571,13 @@ app = dash.Dash(
 )
 app.title = "Fraud Detection Dashboard"
 
+# Expose WSGI server for Gunicorn and add health check
+server = app.server
+
+@server.route("/healthz")
+def healthz():
+    return Response("ok", status=200)
+
 tabs_styles = {"height": "44px", "border": "none"}
 tab_style = {
     "padding": "10px 16px",
@@ -649,25 +656,6 @@ def build_tabs():
     )
 
     # --- KPIs grid and date note ---
-    kpis = html.Div(
-        [
-            kpi_card("Chargeback Rate", fmt_pct(overall_cb_rate), "All deliveries"),
-            kpi_card("Fraud Rate", fmt_pct(overall_fraud_rate), "Fraudulent chargebacks / deliveries"),
-            kpi_card("Total Chargeback Cost ($)", f"{overall_cb_cost:,.0f}", "Sum of CB costs"),
-            kpi_card("Avg GOV ($)", f"{avg_gov:,.2f}", "Order average"),
-            kpi_card("Avg Sift Score", f"{avg_sift:.2f}" if not np.isnan(avg_sift) else "—", "Order creation"),
-        ],
-        style={
-            "display": "grid",
-            "gridTemplateColumns": "repeat(auto-fit, minmax(220px, 1fr))",
-            "gap": "12px",
-            "alignItems": "stretch",
-            "margin": "14px 0 6px 0",
-        },
-    )
-
-
-    # KPIs grid and date note
     kpis = html.Div(
         [
             kpi_card("Chargeback Rate", fmt_pct(overall_cb_rate), "All deliveries"),
@@ -962,7 +950,6 @@ def route_to_recommendation(all_clicks, all_ids):
         return dash.no_update, dash.no_update
     trig = ctx.triggered[0]["prop_id"].split(".")[0]
     try:
-        import json
         key = json.loads(trig)["key"]
     except Exception:
         key = None
@@ -971,4 +958,6 @@ def route_to_recommendation(all_clicks, all_ids):
     return dash.no_update, dash.no_update
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Local/container run (Render uses gunicorn + server above)
+    port = int(os.environ.get("PORT", 8050))
+    app.run(host="0.0.0.0", port=port, debug=False)
