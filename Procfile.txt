@@ -1,0 +1,3 @@
+# Requirements for Fraud Detection & Trends Dashboard
+# Tested with Python 3.9
+web: gunicorn fraud_dashboard:app.server

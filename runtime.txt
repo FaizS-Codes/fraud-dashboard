@@ -1,0 +1,4 @@
+# Requirements for Fraud Detection & Trends Dashboard
+# Tested with Python 3.9
+python-3.11.9
+
